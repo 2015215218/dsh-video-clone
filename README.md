@@ -293,7 +293,7 @@ pnpm add github:<你的账号>/dsh-video-clone
 ## 测试
 
 ```bash
-npm test          # 三套：核心库 179 + 插件装载 86 + web/面板 126
+npm test          # 四套：核心库 179 + 插件装载 86 + web/面板 127 + 版本与包装 29
 ```
 
 - **核心库**（`test/run-tests.js`）只用 Node 内建 + `ffmpeg`，自带素材生成，离线可跑。
@@ -302,8 +302,52 @@ npm test          # 三套：核心库 179 + 插件装载 86 + web/面板 126
   不会假装通过。`DSH_CORDIS_PATH=…` 可手动指定。
 - **插件装载**（`test/plugin-tests.js`）必须有 DSH 安装才能解析 `@deepseek-ai/dsh-tools`。
   没有就打印跳过原因并 **exit 0**；想让缺 DSH 直接算失败，设 `REQUIRE_DSH=1`。
+- **版本与包装**（`test/version-tests.js`）不需要 DSH 也不需要 ffmpeg，永远会跑。
+  它钉住的是「这个包有没有被正确地说成它自己」——见下面「版本管理」。
 
 > 为什么要这么大费周章地区分「跳过」和「通过」：本项目栽过一次 —— 媒体层校验器在零输出时
 > 返回空串，两个空串比相等，于是「什么都没验」被报成了「验过了」。参见下面「校验器失效 ≠ 校验通过」。
 
 Node 18 / 20 / 22 / 24 均已实测全绿（CI 也跑这四个版本）。
+
+---
+
+## 版本管理
+
+版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。**唯一事实源是 `package.json` 的
+`version`** —— `lib/clone.js` 的 `TOOL_VERSION` 由它推导，不允许再写第二份。
+
+> 为什么较真这一条：`TOOL_VERSION` 会流进**溯源账本**的 `version` 字段（还有面板徽章与
+> CLI 横幅）。两处漂移的话，账本就会记下一个根本不存在的版本 —— 那是溯源完整性问题，不是笔误。
+
+### 什么算破坏性
+
+对外契约不是「源码没变」，而是：DSH 工具名与输入字段、面板 API 的动作名与字段、账本字段、
+`package.json` 里的 `dsh.*` 与 `exports["./client"]`、CLI 子命令与参数语义。
+**动到其中任何一个就要发 major**；新容器/新选项/new feature 发 minor；修 bug 发 patch。
+
+### 发版
+
+```bash
+npm run release -- patch          # 或 minor / major / 1.2.3
+npm run release -- patch --push   # 顺带推送（默认只做本地，把推送命令打给你）
+npm run release -- patch --dry-run
+```
+
+脚本会依次校验：工作区干净 → 在 `main` 上 → 与 `origin/main` 同步 → 测试全过 →
+版本号确实变大 → tag 不重名 → `[Unreleased]` 段真的有内容。任一不过就停下并说明原因。
+
+`CHANGELOG.md` 里的 `## [Unreleased]` 是待发区：平时往那儿记，发版时脚本把它滚成
+`## [x.y.z] - 日期`，并自动补底部的比较链接。
+
+### 装上之后怎么升级
+
+本机 DSH profile 是钉 tag 装的：
+
+```bash
+cd ~/.dsh/profiles/desktop
+pnpm add github:2015215218/dsh-video-clone#v1.0.0    # 升到指定版本
+```
+
+> 注意：`github:` 安装拿到的是**冻结副本**，不是活链接 —— `files` 白名单里的东西才会装下来。
+> 本地改源码不会影响已安装的插件，要改完 push 再 `pnpm add …#vX.Y.Z` 升上去。

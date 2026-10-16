@@ -56,28 +56,42 @@ const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8'
 step(1, '检查工作区');
 
 if (!existsSync(join(ROOT, '.git'))) die('这里不是 git 仓库');
-const dirty = git('status', '--porcelain');
-if (dirty) {
-  die('工作区不干净，先提交或 stash 再发版', dirty.split('\n').map((l) => '  ' + l).join('\n'));
-}
-say('  ✔ 工作区干净');
 
 const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
-if (branch !== BRANCH) die(`当前在 ${branch}，发版请在 ${BRANCH} 上`);
-say(`  ✔ 在 ${BRANCH} 上`);
+const dirty = git('status', '--porcelain');
 
-// 与远端同步，避免发出版本之后才发现落后
-try {
-  git('fetch', '--quiet', 'origin', BRANCH);
-  const local = git('rev-parse', 'HEAD');
-  const remote = git('rev-parse', `origin/${BRANCH}`);
-  if (local !== remote) {
-    die(`本地 ${local.slice(0, 7)} 与 origin/${BRANCH} ${remote.slice(0, 7)} 不一致`,
-      '先 pull / push，别在一个别人没有的基点上册封版本');
+// 干跑刻意**不**校验这三项：干跑的用处正是「东西还没提交，先看一眼会怎样」。
+// 真发版时才拦 —— 那时工作区不干净 / 不在 main / 落后于远端，都会发出版本事故。
+if (DRY) {
+  const dirtyCount = dirty ? dirty.split('\n').length : 0;
+  say('  ⚠️  --dry-run：跳过「干净 / 在 main / 与远端同步」这三项检查');
+  say(`      当前分支 ${branch}，未提交改动 ${dirtyCount} 处`);
+} else {
+  if (dirty) {
+    die('工作区不干净，先提交或 stash 再发版', dirty.split('\n').map((l) => '  ' + l).join('\n'));
   }
-  say(`  ✔ 与 origin/${BRANCH} 同步（${local.slice(0, 7)}）`);
-} catch (err) {
-  say(`  ⚠️  跳过远端同步检查：${String(err.message).split('\n')[0]}`);
+  say('  ✔ 工作区干净');
+
+  if (branch !== BRANCH) die(`当前在 ${branch}，发版请在 ${BRANCH} 上`);
+  say(`  ✔ 在 ${BRANCH} 上`);
+
+  // 与远端同步，避免发出版本之后才发现落后
+  let local = '';
+  let remote = '';
+  try {
+    git('fetch', '--quiet', 'origin', BRANCH);
+    local = git('rev-parse', 'HEAD');
+    remote = git('rev-parse', `origin/${BRANCH}`);
+  } catch (err) {
+    say(`  ⚠️  跳过远端同步检查：${String(err.message).split('\n')[0]}`);
+  }
+  if (local && remote) {
+    if (local !== remote) {
+      die(`本地 ${local.slice(0, 7)} 与 origin/${BRANCH} ${remote.slice(0, 7)} 不一致`,
+        '先 pull / push，别在一个别人没有的基点上册封版本');
+    }
+    say(`  ✔ 与 origin/${BRANCH} 同步（${local.slice(0, 7)}）`);
+  }
 }
 
 /* ── 2. 测试 ──────────────────────────────────────────────────────── */
