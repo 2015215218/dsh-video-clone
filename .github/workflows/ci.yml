@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 18 是 package.json 里声明的最低版本；四个版本都在本地实测过全绿。
+        # 加新版本时请同步更新这一行，别只改 package.json。
+        node: ['18', '20', '22', '24']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: 装 ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: 环境自检
+        run: |
+          node --version
+          ffmpeg -version | head -1
+
+      # set -o pipefail 是必须的：否则 npm test 的失败会被 tee 吃掉，
+      # CI 会在测试挂掉的情况下显示绿灯。
+      - name: 跑测试
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
+
+      # 跳过必须是**看得见**的。CI 上没有 DSH 安装，所以插件装载那一套会显式跳过；
+      # 如果哪天它悄悄变成跳过还没人知道，那这套 CI 就是在演。
+      - name: 汇总并标记跳过项
+        if: always()
+        run: |
+          {
+            echo '### 测试结果'
+            grep -E '结果：通过' test.log || echo '（没抓到结果行）'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if grep -q '⚠️' test.log; then
+            {
+              echo ''
+              echo '**以下检查被跳过** —— CI 上没有 DSH 安装：'
+              echo '```'
+              grep '⚠️' test.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::有检查被跳过：CI 无 DSH 安装，插件装载测试未运行。"
+          fi

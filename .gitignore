@@ -1,0 +1,46 @@
+# 依赖
+# 注意：这里刻意**不写** `node_modules/`（带尾斜杠）。
+# 尾斜杠只匹配目录，而 git 不跟随符号链接 —— 本仓库根上的 node_modules 正是
+# 一个指向 ~/.dsh/profiles/node_modules 的软链（test/plugin-tests.js 建的），
+# 带斜杠就匹配不到它，`git add .` 会把这条软链提交出去，既泄露本机路径又对别人无意义。
+node_modules
+
+# 运行产物：克隆输出、账本、临时工作区
+out
+work
+*_clones
+
+# 备份与临时文件
+*.bak
+*.bak.*
+*.orig
+*.rej
+*.tmp
+*.temp
+
+# 日志
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# 覆盖率
+coverage
+.nyc_output
+
+# 本地环境
+.env
+.env.local
+.env.*.local

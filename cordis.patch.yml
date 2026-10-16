@@ -1,0 +1,6 @@
+# dsh-video-clone bundle patch: 把插件行插进 profile 的 loader roster。
+# 该行是一个按包名引用的裸插件：宿主半边（exports "."）在宿主进程里跑，
+# 注册 video_clone / video_clone_scan 两个工具。
+- insert:
+    - id: video-clone
+      name: dsh-video-clone

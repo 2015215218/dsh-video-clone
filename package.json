@@ -1,0 +1,50 @@
+{
+  "name": "dsh-video-clone",
+  "version": "1.0.0",
+  "description": "把一支视频复制成 N 份，每份塞一个唯一 GUID 让文件哈希互异，而媒体流与解码帧逐字节不变。Copy one video into N files, each carrying a unique GUID so every file hash differs, while the media stream and decoded frames stay byte-identical.",
+  "type": "module",
+  "license": "MIT",
+  "author": "hupingping",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2015215218/dsh-video-clone.git"
+  },
+  "bugs": {
+    "url": "https://github.com/2015215218/dsh-video-clone/issues"
+  },
+  "homepage": "https://github.com/2015215218/dsh-video-clone#readme",
+  "main": "index.js",
+  "bin": {
+    "video-clone": "./bin/video-clone.js"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./lib": "./lib/index.js",
+    "./lib/*": "./lib/*",
+    "./package.json": "./package.json"
+  },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node test/run-tests.js && node test/plugin-tests.js && node test/web-tests.js",
+    "test:web": "node test/web-tests.js"
+  },
+  "keywords": ["deepseek", "deepseek-harness", "dsh", "dsh-plugin", "cordis", "video", "hash", "guid", "uuid", "forensics", "provenance"],
+  "files": ["lib/", "bin/", "index.js", "client.js", "cordis.patch.yml", "README.md", "SKILL.md"],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "dsh-video-clone",
+    "summary": "视频唯一化分发：一支视频复制成 N 份，每份写入唯一 GUID（容器层标记），文件哈希互异、媒体流与解码帧零改动，并产出 guid→文件 溯源账本。带 DSH Web GUI 工作台面板。",
+    "categories": ["工具", "媒体"],
+    "surfaces": ["host", "web"],
+    "capabilities": { "provides": [] }
+  }
+}

@@ -1,0 +1,26 @@
+# 仓库里一律 LF：避免 Windows 贡献者引入整文件级的换行噪声 diff
+* text=auto eol=lf
+
+# 二进制——不做换行转换、不做文本 diff
+*.mp4   binary
+*.mov   binary
+*.mkv   binary
+*.webm  binary
+*.avi   binary
+*.m2ts  binary
+*.flv   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.scpt  binary
+*.wasm  binary
+
+# 注意：这里刻意**没有** `*.ts binary`。
+# 本工具处理 MPEG-TS，但仓库里没有任何 .ts 素材（测试由 ffmpeg 现场生成到临时目录），
+# 而把 *.ts 标成 binary 会连带毁掉将来可能加入的 TypeScript 文件的 diff 与评审。
+
+# 生成物不参与语言统计
+package-lock.json  linguist-generated
+pnpm-lock.yaml     linguist-generated

@@ -1,0 +1,6 @@
+work/
+out/
+test/
+node_modules/
+*.bak
+*.bak.*
