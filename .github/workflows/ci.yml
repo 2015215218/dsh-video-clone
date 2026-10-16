@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    # 发版 tag 也要跑。否则「这个 tag 到底是绿的还是没测过」无从查起 ——
+    # v1.0.0 碰巧因为同一提交也走过 main 的 CI，但那是运气，不是保证。
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
